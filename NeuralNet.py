@@ -21,7 +21,30 @@ class Layer:
 	def setActuals(newActuals):
 		self.actuals = newActuals;
 
-	#def setWeights():
+	def setWeights(gradient):
+		self.weights = np.add(self.weights, gradient)
+
+
+	def getWeightsAndBiasVector():
+		weightCounter = 0
+		biasCounter = 0
+		numberOfItems = 0;
+		size = self.weights.size + self.biases.size
+		weightsAndBiases = np.empty([size ,1])
+		for item in np.nditer(weightsAndBiases):
+			if numberOfItems % 2 == 0:
+				item = self.weights.item(weightCounter)
+				weightCounter += 1
+			
+			else:
+				item = self.biases.item(biasCounter)
+				biasCounter += 1
+
+			numberOfItems += 1
+
+		return weightsAndBiases
+
+
 
 class NueralNetwork:
 	def __init__(self):
@@ -34,7 +57,7 @@ class NueralNetwork:
 
 	def setInputLayer(self, inputLayer):
 		self.InputLayer = inputLayer
-		Layers.append(inputLayer)
+		self.Layers.append(inputLayer)
 		self.layerCount += 1
 
 	def setHiddenLayers(self, NewLayer):
@@ -82,8 +105,25 @@ class NueralNetwork:
 		previousLayer = None
 
 		for dataEntry in train.T:
-			predict();
-			backPropogate(makePrediction());
+			predict(dataEntry);
+			backPropogate(makePrediction(), test);
+
+
+	def errorCalculation(results, correctResult):
+		error = 0.0;
+		resultNumber = 0;
+		for result in np.nditer(results.actuals):
+			if resultNumber != correctResult:
+				error = error + (result - 0.0)**2
+
+			else:
+				error = error + (result - 1.0)**2
+			resultNumber += 1;
+
+		resultNumber += 1;
+		error = error / resultNumber;
+		return error;
+
 
 
 	def backPropogate(prediction):
