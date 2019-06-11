@@ -9,53 +9,85 @@ class Layer:
 		self.biases = np.random.rand(nuerons, 1)
 		self.weights = np.random.rand(nuerons, nextNuerons)
 		self.actuals = actualization
-		self.newActuals = np.empty([nextNuerons, 1])
+		self.nextActuals = np.empty([nextNuerons, 1])
 
 
-	def getNewActuals():
-		self.newActuals = np.add(np.matmultiply(self.weights, self.actuals), self.biases);
+	def getNextActuals():
+		self.nextActuals = np.add(np.matmultiply(self.weights, self.actuals), self.biases);
 		for x in np.nditer(nextNuerons):
 			x = sigmoid(x)
-		return self.newActuals
+		return self.nextActuals
+
+	def setActuals(newActuals):
+		self.actuals = newActuals;
 
 	#def setWeights():
 
 class NueralNetwork:
 	def __init__(self):
 		self.InputLayer = None
-		self.HiddenLayers = list();
+		self.HiddenLayers = list()
 		self.OutputLayer = None
+		self.Layers = list()
+		self.layerCount = 0
 
-	def setInputLayer(self, inputs):
-		self.InputLayer = inputs
 
-	def setHiddenLayers(self, layer):
-		self.HiddenLayers.append(layer)
-	
-	def setOutputLayer(self, outputs):
-		self.OutputLayer = outputs
+	def setInputLayer(self, inputLayer):
+		self.InputLayer = inputLayer
+		Layers.append(inputLayer)
+		self.layerCount += 1
+
+	def setHiddenLayers(self, NewLayer):
+		self.HiddenLayers.append(NewLayer)
+		self.Layers.append(NewLayer)
+		self.layerCount += 1
+
+	def setOutputLayer(self, outputLayer):
+		self.OutputLayer = outputLayer
+		self.Layers.append(outputLayer)
+		self.layerCount += 1
 
 	def getInputLayer(self):
 		return self.InputLayer
 
 	def getHiddenLayers(self, index):
-		return self.HiddenLayers[index].weights.size
+		return self.HiddenLayers[index]
 	
 	def getOutputLayer(self):
 		return self.OutputLayer
 
+	def predict(dataEntry):
+		for layer in Layers:
+			if layer is self.InputLayer:
+				layer.setActuals = dataEntry
+				previousLayer = layer
+			else:
+				layer.setActuals = previousLayer.getNextActuals()
+				previousLayer = layer
+
+		makePrediction();
+
 	def makePrediction(self):
-		realPrediction;
+		finalPrediction = 0;
 		prediction = 0;
 		actualization = 0;
 		for x in np.nditer(self.OutputLayer):
 			if x > prediction:
-				realPrediction = prediction;
-			++prediction
+				finalPrediction = prediction
+			prediction += 1
 
-		return realPrediction, actualization;
+		return finalPrediction, actualization
 
-	#def backPropogate():
+	def fit(self, train, test):
+		previousLayer = None
+
+		for dataEntry in train.T:
+			predict();
+			backPropogate(makePrediction());
+
+
+	def backPropogate(prediction):
+		print('TBI')
 
 
 
