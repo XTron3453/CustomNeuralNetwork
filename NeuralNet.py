@@ -1,11 +1,19 @@
 import numpy as np
 import math
+import tensorflow as tf
+
+mnist = tf.keras.datasets.mnist
+
+(x_train, y_train),(x_test, y_test) = mnist.load_data()
+x_train, x_test = x_train / 255.0, x_test / 255.0
+
 
 def sigmoid(x):
   return 1 / (1 + math.exp(-x))
 
 class Layer:
 	def __init__(self, actualization, nuerons, nextNuerons):
+		self.weightDimension = [nuerons, nextNuerons]
 		self.biases = np.random.rand(nuerons, 1)
 		self.weights = np.random.rand(nuerons, nextNuerons)
 		self.actuals = actualization
@@ -21,28 +29,22 @@ class Layer:
 	def setActuals(newActuals):
 		self.actuals = newActuals;
 
-	def setWeights(gradient):
-		self.weights = np.add(self.weights, gradient)
+	def setWeightsAndBias(gradientWeight, gradientBias):
+		weightsVector = getWeightVector()
 
+		newWeights = np.add(weightsVector, gradientWeight)
+		newBiases = np.add(self.biases, gradientBias) 
 
-	def getWeightsAndBiasVector():
-		weightCounter = 0
-		biasCounter = 0
-		numberOfItems = 0;
-		size = self.weights.size + self.biases.size
-		weightsAndBiases = np.empty([size ,1])
-		for item in np.nditer(weightsAndBiases):
-			if numberOfItems % 2 == 0:
-				item = self.weights.item(weightCounter)
-				weightCounter += 1
-			
-			else:
-				item = self.biases.item(biasCounter)
-				biasCounter += 1
+		self.biases = newBiases
+		self.weights = np.reshape(newWeights, (weightDimension[0], weightDimension[1]))
 
-			numberOfItems += 1
+	def getWeightVector():
+		weightsVector = np.reshape(self.weights, (self.weights.size, 1))
+		return weightsVector
 
-		return weightsAndBiases
+	def getBiases():
+		return self.biases
+
 
 
 
@@ -101,17 +103,16 @@ class NueralNetwork:
 
 		return finalPrediction, actualization
 
-	def fit(self, train, test):
+	def fit(self, data, answers):
 		previousLayer = None
 
-		for dataEntry in train.T:
+		for dataEntry in data.T:
 			predict(dataEntry);
-			backPropogate(makePrediction(), test);
+			backPropogate(makePrediction(), answers);
 
 
-	def errorCalculation(results, correctResult):
+	def costCalculation(results, correctResult):
 		error = 0.0;
-		resultNumber = 0;
 		for result in np.nditer(results.actuals):
 			if resultNumber != correctResult:
 				error = error + (result - 0.0)**2
@@ -121,14 +122,19 @@ class NueralNetwork:
 			resultNumber += 1;
 
 		resultNumber += 1;
-		error = error / resultNumber;
+		error = error / resultNumber
+
 		return error;
 
 
 
-	def backPropogate(prediction):
-		print('TBI')
-
+	def backPropogate(prediction, correctResult):
+		for layer in reversed(self.Layers):
+			errorWeight = np.full((layer.weights.size, 1), costCalculation(prediction, correctResult))
+			errorBias = np.full((layer.biases.size, 1), costCalculation(prediction, correctResult))
+			gradientWeight = np.gradient(errorWeight, layer.getWeightVector())
+			gradientBias = np.gradient(errorBias, layer.getBiases())
+			layer.setWeightsAndBias(gradientWeight, gradientBias)
 
 
 def intializeNueralNetwork(data, inputs, outputs, hiddenLayers, hiddenNuerons):
@@ -141,7 +147,8 @@ def intializeNueralNetwork(data, inputs, outputs, hiddenLayers, hiddenNuerons):
 
 
 
-myNueralNetwork = intializeNueralNetwork(np.empty([20, 1]), 20, 5, 2, 7)
+myNueralNetwork = intializeNueralNetwork(np.empty([28, 1]), 20, 5, 2, 7)
+myNueralNetwork.fit(x_train, y_train)
 print(myNueralNetwork.getInputLayer())
 print(myNueralNetwork.getHiddenLayers(0))
 print(myNueralNetwork.getHiddenLayers(1))
