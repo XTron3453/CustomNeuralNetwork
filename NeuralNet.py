@@ -14,19 +14,19 @@ def sigmoid(x):
 class Layer:
 	def __init__(self, actualization, nuerons, nextNuerons):
 		self.weightDimension = [nuerons, nextNuerons]
-		self.biases = np.random.rand(nuerons, 1)
-		self.weights = np.random.rand(nuerons, nextNuerons)
+		self.biases = np.random.rand(nextNuerons, 1)
+		self.weights = np.random.rand(nextNuerons, actualization.size)
 		self.actuals = actualization
 		self.nextActuals = np.empty([nextNuerons, 1])
 
 
-	def getNextActuals():
-		self.nextActuals = np.add(np.matmultiply(self.weights, self.actuals), self.biases);
-		for x in np.nditer(nextNuerons):
+	def getNextActuals(self):
+		self.nextActuals = np.add(np.matmul(self.weights, self.actuals), self.biases);
+		for x in np.nditer(self.nextActuals.size):
 			x = sigmoid(x)
 		return self.nextActuals
 
-	def setActuals(newActuals):
+	def setActuals(self, newActuals):
 		self.actuals = newActuals;
 
 	def setWeightsAndBias(gradientWeight, gradientBias):
@@ -38,11 +38,11 @@ class Layer:
 		self.biases = newBiases
 		self.weights = np.reshape(newWeights, (weightDimension[0], weightDimension[1]))
 
-	def getWeightVector():
+	def getWeightVector(self):
 		weightsVector = np.reshape(self.weights, (self.weights.size, 1))
 		return weightsVector
 
-	def getBiases():
+	def getBiases(self):
 		return self.biases
 
 
@@ -54,8 +54,9 @@ class NueralNetwork:
 		self.HiddenLayers = list()
 		self.OutputLayer = None
 		self.Layers = list()
-		self.layerCount = 0
 
+		self.layerCount = 0
+		self.dataCount = 0
 
 	def setInputLayer(self, inputLayer):
 		self.InputLayer = inputLayer
@@ -81,8 +82,8 @@ class NueralNetwork:
 	def getOutputLayer(self):
 		return self.OutputLayer
 
-	def predict(dataEntry):
-		for layer in Layers:
+	def predict(self, dataEntry):
+		for layer in self.Layers:
 			if layer is self.InputLayer:
 				layer.setActuals = dataEntry
 				previousLayer = layer
@@ -90,64 +91,89 @@ class NueralNetwork:
 				layer.setActuals = previousLayer.getNextActuals()
 				previousLayer = layer
 
-		makePrediction();
+		self.makePrediction();
 
 	def makePrediction(self):
 		finalPrediction = 0;
 		prediction = 0;
-		actualization = 0;
-		for x in np.nditer(self.OutputLayer):
+		for x in np.nditer(self.OutputLayer.actuals):
 			if x > prediction:
 				finalPrediction = prediction
 			prediction += 1
 
-		return finalPrediction, actualization
+		return finalPrediction, self.OutputLayer.actuals
 
 	def fit(self, data, answers):
 		previousLayer = None
+		self.InputLayer.setActuals(data)
 
 		for dataEntry in data.T:
-			predict(dataEntry);
-			backPropogate(makePrediction(), answers);
+			self.predict(dataEntry);
+			self.backPropogate(self.makePrediction(), answers);
+		self.dataCount = 0
+
+	def costCalculation(self, results, correctResult):
+		error = 0.0
+		predictedResult = 0
+		resultNumber = 0
+		resultIndex = 0
+		indexIterator = 0
+
+		for check in np.nditer(results[1]):
+			print("check: ", check)
+			if check > predictedResult:
+				predictedResult = check
+				resultIndex = indexIterator
+
+			indexIterator += 1;
+
+		print("resultIndex: ", resultIndex)
+		print("Result: ", predictedResult)
+		print("Correct: ", correctResult[self.dataCount])
 
 
-	def costCalculation(results, correctResult):
-		error = 0.0;
-		for result in np.nditer(results.actuals):
-			if resultNumber != correctResult:
+		for result in np.nditer(results[1]):
+
+			if indexIterator != correctResult[self.dataCount]:
 				error = error + (result - 0.0)**2
 
 			else:
 				error = error + (result - 1.0)**2
 			resultNumber += 1;
 
-		resultNumber += 1;
+		resultNumber += 1
 		error = error / resultNumber
+		print("Error: ", error)
+		self.dataCount += 1
 
 		return error;
 
 
 
-	def backPropogate(prediction, correctResult):
+	def backPropogate(self, prediction, correctResult):
 		for layer in reversed(self.Layers):
-			errorWeight = np.full((layer.weights.size, 1), costCalculation(prediction, correctResult))
-			errorBias = np.full((layer.biases.size, 1), costCalculation(prediction, correctResult))
-			gradientWeight = np.gradient(errorWeight, layer.getWeightVector())
+			if(layer.weights.size == 0):
+				continue
+			errorWeight = np.full((layer.weights.size, 1), self.costCalculation(prediction, correctResult))
+			errorBias = np.full((layer.biases.size, 1), self.costCalculation(prediction, correctResult))
+			print(tuple(map(tuple, layer.getWeightVector())))
+			gradientWeight = np.gradient(errorWeight, tuple(map(tuple, layer.getWeightVector())))
 			gradientBias = np.gradient(errorBias, layer.getBiases())
 			layer.setWeightsAndBias(gradientWeight, gradientBias)
 
 
-def intializeNueralNetwork(data, inputs, outputs, hiddenLayers, hiddenNuerons):
+def intializeNueralNetwork(data, outputs, hiddenLayers, hiddenNuerons):
 	NN = NueralNetwork();
-	NN.setInputLayer(Layer(data, inputs, hiddenNuerons))
+	NN.setInputLayer(Layer(data, data.size, hiddenNuerons))
 	for x in range(hiddenLayers):
-		NN.setHiddenLayers(Layer(np.empty([hiddenNuerons, 1]), hiddenNuerons, hiddenNuerons))
-	NN.setOutputLayer(Layer(np.empty([outputs, 1]), 0, 0))	
+		NN.setHiddenLayers(Layer(np.random.rand(hiddenNuerons, 1), hiddenNuerons, hiddenNuerons))
+	NN.setOutputLayer(Layer(np.random.rand(outputs, 1), 0, 0))	
 	return NN;
 
 
 
-myNueralNetwork = intializeNueralNetwork(np.empty([28, 1]), 20, 5, 2, 7)
+myNueralNetwork = intializeNueralNetwork(np.random.rand(28, 1), 10, 2, 20)
+
 myNueralNetwork.fit(x_train, y_train)
 print(myNueralNetwork.getInputLayer())
 print(myNueralNetwork.getHiddenLayers(0))
